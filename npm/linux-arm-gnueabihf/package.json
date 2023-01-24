@@ -1,0 +1,22 @@
+{
+  "name": "@napi-rs/ssh-linux-arm-gnueabihf",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "main": "ssh.linux-arm-gnueabihf.node",
+  "files": [
+    "ssh.linux-arm-gnueabihf.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "git@github.com:Brooooooklyn/ssh.git",
+    "type": "git"
+  }
+}

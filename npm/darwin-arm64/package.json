@@ -1,0 +1,22 @@
+{
+  "name": "@napi-rs/ssh-darwin-arm64",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "ssh.darwin-arm64.node",
+  "files": [
+    "ssh.darwin-arm64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "git@github.com:Brooooooklyn/ssh.git",
+    "type": "git"
+  }
+}
