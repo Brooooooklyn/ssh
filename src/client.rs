@@ -8,7 +8,11 @@ use napi::{
 use napi_derive::napi;
 use russh::client;
 use russh_keys::{agent::client::AgentClient, key, load_secret_key};
-use tokio::{io::AsyncWriteExt, net::UnixStream};
+use tokio::io::AsyncWriteExt;
+#[cfg(windows)]
+use tokio::net::TcpStream as SshAgentStream;
+#[cfg(not(windows))]
+use tokio::net::UnixStream as SshAgentStream;
 
 use crate::{
   err::IntoError,
@@ -141,7 +145,7 @@ impl russh::client::Handler for ClientHandle {
 #[napi]
 pub struct Client {
   handle: client::Handle<ClientHandle>,
-  _agent: AgentClient<UnixStream>,
+  _agent: AgentClient<SshAgentStream>,
 }
 
 #[napi]
@@ -164,7 +168,7 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
 
 #[napi]
 impl Client {
-  pub fn new(handle: client::Handle<ClientHandle>, agent: AgentClient<UnixStream>) -> Self {
+  pub fn new(handle: client::Handle<ClientHandle>, agent: AgentClient<SshAgentStream>) -> Self {
     Self {
       handle,
       _agent: agent,
