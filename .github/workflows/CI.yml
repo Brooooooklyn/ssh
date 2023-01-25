@@ -28,7 +28,8 @@ jobs:
               yarn build
               strip -x *.node
           - host: windows-latest
-            build: yarn build
+            build: |
+              yarn build
             target: x86_64-pc-windows-msvc
           - host: windows-latest
             build: |
@@ -45,7 +46,11 @@ jobs:
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: set -e && yarn build && strip *.node
+            build: |-
+             set -e &&
+             apk add --update --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing --no-cache perl &&
+             yarn build &&
+             strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
@@ -56,15 +61,20 @@ jobs:
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |-
               set -e &&
+              sudo apt-get update &&
+              sudo apt-get install perl -y &&
+              export LDFLAGS="-L/usr/aarch64-unknown-linux-gnu/lib/gcc/aarch64-unknown-linux-gnu/4.8.5" &&
+              export CFLAGS="-fuse-ld=lld -mcrc -B/usr/aarch64-unknown-linux-gnu/lib/gcc/aarch64-unknown-linux-gnu/4.8.5 --sysroot=/usr/aarch64-unknown-linux-gnu/aarch64-unknown-linux-gnu/sysroot" &&
+              export CXXFLAGS="-fuse-ld=lld -mcrc -B/usr/aarch64-unknown-linux-gnu/lib/gcc/aarch64-unknown-linux-gnu/4.8.5 --sysroot=/usr/aarch64-unknown-linux-gnu/aarch64-unknown-linux-gnu/sysroot" &&
               yarn build --target aarch64-unknown-linux-gnu &&
               aarch64-unknown-linux-gnu-strip *.node
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             setup: |
               sudo apt-get update
-              sudo apt-get install gcc-arm-linux-gnueabihf -y
+              sudo apt-get install perl gcc-arm-linux-gnueabihf -y
             build: |
-              yarn build --target=armv7-unknown-linux-gnueabihf
+              yarn build --target armv7-unknown-linux-gnueabihf --zig --zig-link-only
               arm-linux-gnueabihf-strip *.node
           - host: ubuntu-latest
             target: aarch64-linux-android
@@ -81,6 +91,7 @@ jobs:
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
             build: |-
               set -e &&
+              apk add --update --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing --no-cache perl &&
               rustup target add aarch64-unknown-linux-musl &&
               yarn build --target aarch64-unknown-linux-musl &&
               /aarch64-linux-musl-cross/bin/aarch64-linux-musl-strip *.node
@@ -117,7 +128,7 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
         if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' }}
         with:
-          version: 0.10.0
+          version: 0.10.1
       - name: Setup toolchain
         run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
@@ -136,6 +147,8 @@ jobs:
           check-latest: true
           cache: yarn
           architecture: x86
+      - uses: shogo82148/actions-setup-perl@v1
+        if: ${{ matrix.settings.host == 'windows-latest' }}
       - name: Build in docker
         uses: addnab/docker-run-action@v3
         if: ${{ matrix.settings.docker }}
@@ -145,8 +158,11 @@ jobs:
           run: ${{ matrix.settings.build }}
       - name: Build
         run: ${{ matrix.settings.build }}
-        if: ${{ !matrix.settings.docker }}
-        shell: bash
+        if: ${{ !matrix.settings.docker && matrix.settings.host != 'windows-latest' }}
+      - name: Build
+        shell: cmd
+        run: ${{ matrix.settings.build }}
+        if: ${{ matrix.settings.host == 'windows-latest' }}
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
@@ -171,7 +187,7 @@ jobs:
           usesh: true
           mem: 3000
           prepare: |
-            pkg install -y -f curl node libnghttp2
+            pkg install -y -f curl node libnghttp2 perl5 gmake
             curl -qL https://www.npmjs.com/install.sh | sh
             npm install --location=global --ignore-scripts yarn
             curl https://sh.rustup.rs -sSf --output rustup.sh
