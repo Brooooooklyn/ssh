@@ -9,7 +9,7 @@
 ## Usage
 
 ```js
-import { connect, checkKnownHosts } from './index.js'
+import { connect, checkKnownHosts } from '@napi-rs/ssh'
 
 const host = '192.168.65.3'
 const port = 22
