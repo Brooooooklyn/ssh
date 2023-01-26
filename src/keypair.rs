@@ -150,3 +150,18 @@ pub fn check_known_hosts(
   }
   .into_error()
 }
+
+#[napi]
+pub fn learn_known_hosts(
+  host: String,
+  port: u32,
+  pubkey: &PublicKey,
+  path: Option<String>,
+) -> Result<()> {
+  if let Some(p) = path {
+    russh_keys::learn_known_hosts_path(&host, port as u16, &pubkey.inner, p)
+  } else {
+    russh_keys::learn_known_hosts(&host, port as u16, &pubkey.inner)
+  }
+  .into_error()
+}
