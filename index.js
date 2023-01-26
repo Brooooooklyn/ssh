@@ -246,7 +246,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ClientIdType, Client, connect, DisconnectReason, SignatureHash, PublicKey, KeyPair, checkKnownHosts, Signature } = nativeBinding
+const { ClientIdType, Client, connect, DisconnectReason, SignatureHash, PublicKey, KeyPair, checkKnownHosts, learnKnownHosts, Signature } = nativeBinding
 
 module.exports.ClientIdType = ClientIdType
 module.exports.Client = Client
@@ -256,4 +256,5 @@ module.exports.SignatureHash = SignatureHash
 module.exports.PublicKey = PublicKey
 module.exports.KeyPair = KeyPair
 module.exports.checkKnownHosts = checkKnownHosts
+module.exports.learnKnownHosts = learnKnownHosts
 module.exports.Signature = Signature

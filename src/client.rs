@@ -3,10 +3,12 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use napi::{
   bindgen_prelude::*,
-  threadsafe_function::{ErrorStrategy, ThreadsafeFunction, UnknownReturnValue},
+  threadsafe_function::{
+    ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode, UnknownReturnValue,
+  },
 };
 use napi_derive::napi;
-use russh::client;
+use russh::client::{self, Session};
 use russh_keys::{agent::client::AgentClient, key, load_secret_key};
 use tokio::io::AsyncWriteExt;
 #[cfg(windows)]
@@ -109,20 +111,38 @@ impl From<ClientConfig> for russh::client::Config {
 pub struct Config {
   pub client: Option<ClientConfig>,
   pub check_server_key: Option<ThreadsafeFunction<PublicKey, ErrorStrategy::Fatal>>,
+  pub auth_banner: Option<ThreadsafeFunction<String, ErrorStrategy::Fatal>>,
 }
 
 pub struct ClientHandle {
   check_server_key: Option<ThreadsafeFunction<PublicKey, ErrorStrategy::Fatal>>,
+  auth_banner: Option<ThreadsafeFunction<String, ErrorStrategy::Fatal>>,
 }
 
 #[async_trait]
 impl russh::client::Handler for ClientHandle {
   type Error = anyhow::Error;
 
+  async fn auth_banner(
+    mut self,
+    banner: &str,
+    session: Session,
+  ) -> std::result::Result<(Self, Session), Self::Error> {
+    if let Some(on_auth_banner) = self.auth_banner.take() {
+      on_auth_banner.call(banner.to_owned(), ThreadsafeFunctionCallMode::NonBlocking);
+    };
+    Ok((self, session))
+  }
+
   async fn check_server_key(
     mut self,
     server_public_key: &key::PublicKey,
   ) -> std::result::Result<(Self, bool), anyhow::Error> {
+    // if `auth_banner` isn't called, drop the callback
+    // or it will prevent the Node.js process to exit before GC
+    if self.auth_banner.is_some() {
+      drop(self.auth_banner.take());
+    }
     if let Some(check) = &self.check_server_key {
       let check_result: Either3<bool, Promise<bool>, UnknownReturnValue> = check
         .call_async(PublicKey::new(server_public_key.clone()))
@@ -155,12 +175,16 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
     .and_then(|c| c.client.take())
     .map(|c| c.into())
     .unwrap_or_default();
-  let check_server_key = config.and_then(|c| c.check_server_key);
+  let check_server_key = config.as_mut().and_then(|c| c.check_server_key.take());
+  let auth_banner = config.as_mut().and_then(|c| c.auth_banner.take());
   let agent = AgentClient::connect_env().await.into_error()?;
   let handle = client::connect(
     Arc::new(client_config),
     addr,
-    ClientHandle { check_server_key },
+    ClientHandle {
+      check_server_key,
+      auth_banner,
+    },
   )
   .await?;
   Ok(Client::new(handle, agent))

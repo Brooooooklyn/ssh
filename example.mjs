@@ -6,6 +6,9 @@ const port = 22
 const client = await connect(`${host}:${port}`, {
   checkServerKey: (key) => {
     return checkKnownHosts(host, port, key)
+  },
+  authBanner: (banner) => {
+    console.info(11111111, banner)
   }
 })
 

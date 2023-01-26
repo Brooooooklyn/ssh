@@ -44,6 +44,7 @@ export interface ClientConfig {
 export interface Config {
   client?: ClientConfig
   checkServerKey?: (value: PublicKey) => any
+  authBanner?: (value: string) => any
 }
 export function connect(addr: string, config?: Config | undefined | null): Promise<Client>
 /** A reason for disconnection. */
@@ -78,6 +79,7 @@ export const enum SignatureHash {
   SHA1 = 2
 }
 export function checkKnownHosts(host: string, port: number, pubkey: PublicKey, path?: string | undefined | null): boolean
+export function learnKnownHosts(host: string, port: number, pubkey: PublicKey, path?: string | undefined | null): void
 export class Client {
   isClosed(): boolean
   authenticatePassword(user: string, password: string): Promise<boolean>
