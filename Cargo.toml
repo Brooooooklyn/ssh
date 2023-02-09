@@ -12,12 +12,14 @@ anyhow = "1"
 dirs = "4"
 napi = { version = "2", default-features = false, features = ["async", "error_anyhow"] }
 napi-derive = { version = "2" }
-russh = { version = "0.35.0-beta.9", features = ["vendored-openssl"] }
-russh-keys = { version = "0.23.0-beta.1", features = ["vendored-openssl"]}
-tokio ={ version = "1", features = ["full"] }
+russh = { version = "0.36", features = ["vendored-openssl"] }
+russh-keys = { version = "0.24", features = ["vendored-openssl"] }
+tokio = { version = "1", features = ["full"] }
 
 [build-dependencies]
 napi-build = "2"
 
 [profile.release]
-lto = true
+opt-level = 3
+lto = 'fat'
+codegen-units = 1
