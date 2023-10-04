@@ -37,7 +37,7 @@ export interface ClientConfig {
   /** The maximal size of a single packet. */
   maximumPacketSize?: number
   /** Time after which the connection is garbage-collected. In milliseconds. */
-  connectionTimeout?: number
+  inactivityTimeout?: number
   /** Whether to expect and wait for an authentication call. */
   anonymous?: boolean
 }
