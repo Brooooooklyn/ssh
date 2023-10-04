@@ -106,7 +106,7 @@ impl KeyPair {
   #[napi(constructor)]
   pub fn new(path: String, password: Option<String>) -> Result<Self> {
     Ok(Self {
-      inner: russh_keys::load_secret_key(path, password.as_ref().map(|s| s.as_str()))
+      inner: russh_keys::load_secret_key(path, password.as_deref())
         .into_error()?,
     })
   }

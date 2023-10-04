@@ -74,7 +74,7 @@ pub struct ClientConfig {
   /// The maximal size of a single packet.
   pub maximum_packet_size: Option<u32>,
   /// Time after which the connection is garbage-collected. In milliseconds.
-  pub connection_timeout: Option<u32>,
+  pub inactivity_timeout: Option<u32>,
   /// Whether to expect and wait for an authentication call.
   pub anonymous: Option<bool>,
 }
@@ -97,8 +97,8 @@ impl From<ClientConfig> for russh::client::Config {
     if let Some(maximum_packet_size) = config.maximum_packet_size {
       russh_config.maximum_packet_size = maximum_packet_size;
     }
-    russh_config.connection_timeout = config
-      .connection_timeout
+    russh_config.inactivity_timeout = config
+      .inactivity_timeout
       .map(|timeout| std::time::Duration::from_millis(timeout as u64));
     if let Some(anonymous) = config.anonymous {
       russh_config.anonymous = anonymous;
@@ -205,6 +205,9 @@ impl Client {
   }
 
   #[napi]
+  /// # Safety
+  ///
+  /// close can not be called concurrently.
   pub async unsafe fn authenticate_password(
     &mut self,
     user: String,
@@ -260,6 +263,10 @@ impl Client {
   }
 
   #[napi]
+  /// # Safety
+  ///
+  /// exec can not be called concurrently.
+  /// The caller in Node.js must ensure that.
   pub async unsafe fn exec(&mut self, command: String) -> Result<ExecOutput> {
     let mut channel = self.handle.channel_open_session().await.into_error()?;
     channel.exec(true, command).await.into_error()?;
