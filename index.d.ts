@@ -81,8 +81,8 @@ export const enum ClientIdType {
 
 export interface Config {
   client?: ClientConfig
-  checkServerKey?: (value: PublicKey) => any
-  authBanner?: (value: string) => any
+  checkServerKey?: (arg: PublicKey) => any
+  authBanner?: (arg: string) => any
 }
 
 export function connect(addr: string, config?: Config | undefined | null): Promise<Client>

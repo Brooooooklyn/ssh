@@ -124,20 +124,20 @@ impl russh::client::Handler for ClientHandle {
   type Error = anyhow::Error;
 
   async fn auth_banner(
-    mut self,
+    &mut self,
     banner: &str,
-    session: Session,
-  ) -> std::result::Result<(Self, Session), Self::Error> {
+    _session: &mut Session,
+  ) -> std::result::Result<(), Self::Error> {
     if let Some(on_auth_banner) = self.auth_banner.take() {
       on_auth_banner.call(banner.to_owned(), ThreadsafeFunctionCallMode::NonBlocking);
     };
-    Ok((self, session))
+    Ok(())
   }
 
   async fn check_server_key(
-    mut self,
+    &mut self,
     server_public_key: &key::PublicKey,
-  ) -> std::result::Result<(Self, bool), anyhow::Error> {
+  ) -> std::result::Result<bool, Self::Error> {
     // if `auth_banner` isn't called, drop the callback
     // or it will prevent the Node.js process to exit before GC
     if self.auth_banner.is_some() {
@@ -149,15 +149,15 @@ impl russh::client::Handler for ClientHandle {
         .await?;
       std::mem::drop(self.check_server_key.take());
       match check_result {
-        Either3::A(a) => Ok((self, a)),
+        Either3::A(a) => Ok(a),
         Either3::B(b) => {
           let result = b.await?;
-          Ok((self, result))
+          Ok(result)
         }
-        Either3::C(_) => Ok((self, false)),
+        Either3::C(_) => Ok(false),
       }
     } else {
-      Ok((self, true))
+      Ok(true)
     }
   }
 }
