@@ -3,9 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use napi::{
   bindgen_prelude::*,
-  threadsafe_function::{
-    ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode, UnknownReturnValue,
-  },
+  threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode, UnknownReturnValue},
 };
 use napi_derive::napi;
 use russh::client::{self, Session};
@@ -110,13 +108,27 @@ impl From<ClientConfig> for russh::client::Config {
 #[napi(object, object_to_js = false)]
 pub struct Config {
   pub client: Option<ClientConfig>,
-  pub check_server_key: Option<ThreadsafeFunction<PublicKey, ErrorStrategy::Fatal>>,
-  pub auth_banner: Option<ThreadsafeFunction<String, ErrorStrategy::Fatal>>,
+  pub check_server_key: Option<
+    ThreadsafeFunction<
+      PublicKey,
+      Either3<bool, Promise<bool>, UnknownReturnValue>,
+      PublicKey,
+      false,
+    >,
+  >,
+  pub auth_banner: Option<ThreadsafeFunction<String, (), String, false>>,
 }
 
 pub struct ClientHandle {
-  check_server_key: Option<ThreadsafeFunction<PublicKey, ErrorStrategy::Fatal>>,
-  auth_banner: Option<ThreadsafeFunction<String, ErrorStrategy::Fatal>>,
+  check_server_key: Option<
+    ThreadsafeFunction<
+      PublicKey,
+      Either3<bool, Promise<bool>, UnknownReturnValue>,
+      PublicKey,
+      false,
+    >,
+  >,
+  auth_banner: Option<ThreadsafeFunction<String, (), String, false>>,
 }
 
 #[async_trait]
@@ -144,7 +156,7 @@ impl russh::client::Handler for ClientHandle {
       drop(self.auth_banner.take());
     }
     if let Some(check) = &self.check_server_key {
-      let check_result: Either3<bool, Promise<bool>, UnknownReturnValue> = check
+      let check_result = check
         .call_async(PublicKey::new(server_public_key.clone()))
         .await?;
       std::mem::drop(self.check_server_key.take());
