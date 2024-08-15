@@ -12,8 +12,8 @@ anyhow = "1"
 dirs = "5"
 napi = { version = "3.0.0-alpha.7", default-features = false, features = ["async", "error_anyhow"] }
 napi-derive = { version = "3.0.0-alpha.5" }
-russh = { version = "0.43", features = ["vendored-openssl"] }
-russh-keys = { version = "0.43", features = ["vendored-openssl"]}
+russh = { version = "0.45", features = ["vendored-openssl"] }
+russh-keys = { version = "0.45", features = ["vendored-openssl"]}
 tokio ={ version = "1", features = ["full"] }
 
 [build-dependencies]
