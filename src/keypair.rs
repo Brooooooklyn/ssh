@@ -26,17 +26,6 @@ impl From<SignatureHash> for russh_keys::key::SignatureHash {
   }
 }
 
-impl SignatureHash {
-  #[inline]
-  fn as_bytes(&self) -> &'static [u8] {
-    match self {
-      Self::SHA1 => b"ssh-rsa",
-      Self::SHA2_256 => b"rsa-sha2-256",
-      Self::SHA2_512 => b"rsa-sha2-512",
-    }
-  }
-}
-
 #[napi]
 pub struct PublicKey {
   inner: russh_keys::key::PublicKey,
@@ -67,7 +56,7 @@ impl PublicKey {
   #[napi]
   /// Only effect the `RSA` PublicKey
   pub fn set_algorithm(&mut self, algorithm: SignatureHash) {
-    self.inner.set_algorithm(algorithm.as_bytes());
+    self.inner.set_algorithm(algorithm.into());
   }
 }
 
@@ -106,8 +95,7 @@ impl KeyPair {
   #[napi(constructor)]
   pub fn new(path: String, password: Option<String>) -> Result<Self> {
     Ok(Self {
-      inner: russh_keys::load_secret_key(path, password.as_deref())
-        .into_error()?,
+      inner: russh_keys::load_secret_key(path, password.as_deref()).into_error()?,
     })
   }
 
