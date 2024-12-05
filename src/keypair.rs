@@ -1,5 +1,6 @@
-use napi::{bindgen_prelude::*, JsBuffer};
+use napi::bindgen_prelude::*;
 use napi_derive::napi;
+use russh_keys::known_hosts::learn_known_hosts_path;
 
 use crate::{err::IntoError, signature::Signature};
 
@@ -68,15 +69,10 @@ pub struct KeyPair {
 #[napi]
 impl KeyPair {
   #[napi(factory)]
-  pub fn generate_ed25519() -> Result<Self> {
-    Ok(Self {
-      inner: russh_keys::key::KeyPair::generate_ed25519().ok_or_else(|| {
-        Error::new(
-          Status::GenericFailure,
-          "Generate ed25519 keypair failed".to_owned(),
-        )
-      })?,
-    })
+  pub fn generate_ed25519() -> Self {
+    Self {
+      inner: russh_keys::key::KeyPair::generate_ed25519(),
+    }
   }
 
   #[napi(factory)]
@@ -115,10 +111,10 @@ impl KeyPair {
 
   #[napi]
   /// Sign a slice using this algorithm.
-  pub fn sign_detached(&self, to_sign: JsBuffer) -> Result<Signature> {
+  pub fn sign_detached(&self, to_sign: &[u8]) -> Result<Signature> {
     self
       .inner
-      .sign_detached(to_sign.into_value()?.as_ref())
+      .sign_detached(to_sign)
       .map(|signature| Signature { inner: signature })
       .into_error()
   }
@@ -147,9 +143,9 @@ pub fn learn_known_hosts(
   path: Option<String>,
 ) -> Result<()> {
   if let Some(p) = path {
-    russh_keys::learn_known_hosts_path(&host, port as u16, &pubkey.inner, p)
+    learn_known_hosts_path(&host, port as u16, &pubkey.inner, p)
   } else {
-    russh_keys::learn_known_hosts(&host, port as u16, &pubkey.inner)
+    russh_keys::known_hosts::learn_known_hosts(&host, port as u16, &pubkey.inner)
   }
   .into_error()
 }
