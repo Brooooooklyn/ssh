@@ -174,10 +174,15 @@ impl russh::client::Handler for ClientHandle {
   }
 }
 
+#[cfg(unix)]
+type SshAgentClient = AgentClient<SshAgentStream>;
+#[cfg(windows)]
+type SshAgentClient = AgentClient<pageant::PageantStream>;
+
 #[napi]
 pub struct Client {
   handle: client::Handle<ClientHandle>,
-  _agent: AgentClient<SshAgentStream>,
+  _agent: SshAgentClient,
 }
 
 #[napi]
@@ -207,7 +212,7 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
 
 #[napi]
 impl Client {
-  pub fn new(handle: client::Handle<ClientHandle>, agent: AgentClient<SshAgentStream>) -> Self {
+  pub fn new(handle: client::Handle<ClientHandle>, agent: SshAgentClient) -> Self {
     Self {
       handle,
       _agent: agent,
