@@ -192,7 +192,7 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
   #[cfg(unix)]
   let agent = AgentClient::connect_env().await.into_error()?;
   #[cfg(windows)]
-  let agent = AgentClient::connect_pageant().await.into_error()?;
+  let agent = AgentClient::connect_pageant().await;
   let handle = client::connect(
     Arc::new(client_config),
     addr,
