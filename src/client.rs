@@ -9,8 +9,6 @@ use napi_derive::napi;
 use russh::client::{self, Session};
 use russh_keys::{agent::client::AgentClient, key, load_secret_key};
 use tokio::io::AsyncWriteExt;
-#[cfg(windows)]
-use tokio::net::TcpStream as SshAgentStream;
 #[cfg(not(windows))]
 use tokio::net::UnixStream as SshAgentStream;
 
@@ -174,10 +172,15 @@ impl russh::client::Handler for ClientHandle {
   }
 }
 
+#[cfg(unix)]
+type SshAgentClient = AgentClient<SshAgentStream>;
+#[cfg(windows)]
+type SshAgentClient = AgentClient<pageant::PageantStream>;
+
 #[napi]
 pub struct Client {
   handle: client::Handle<ClientHandle>,
-  _agent: AgentClient<SshAgentStream>,
+  _agent: SshAgentClient,
 }
 
 #[napi]
@@ -189,7 +192,10 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
     .unwrap_or_default();
   let check_server_key = config.as_mut().and_then(|c| c.check_server_key.take());
   let auth_banner = config.as_mut().and_then(|c| c.auth_banner.take());
+  #[cfg(unix)]
   let agent = AgentClient::connect_env().await.into_error()?;
+  #[cfg(windows)]
+  let agent = AgentClient::connect_pageant().await;
   let handle = client::connect(
     Arc::new(client_config),
     addr,
@@ -204,7 +210,7 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
 
 #[napi]
 impl Client {
-  pub fn new(handle: client::Handle<ClientHandle>, agent: AgentClient<SshAgentStream>) -> Self {
+  pub fn new(handle: client::Handle<ClientHandle>, agent: SshAgentClient) -> Self {
     Self {
       handle,
       _agent: agent,
@@ -233,6 +239,8 @@ impl Client {
   }
 
   #[napi]
+  /// # Safety
+  ///
   /// Perform public key-based SSH authentication.
   /// The key can be omitted to use the default private key.
   /// The key can be a path to a private key file.

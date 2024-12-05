@@ -9,6 +9,8 @@ export declare class Client {
    */
   authenticatePassword(user: string, password: string): Promise<boolean>
   /**
+   * # Safety
+   *
    * Perform public key-based SSH authentication.
    * The key can be omitted to use the default private key.
    * The key can be a path to a private key file.
@@ -31,7 +33,7 @@ export declare class KeyPair {
   clonePublicKey(): PublicKey
   name(): string
   /** Sign a slice using this algorithm. */
-  signDetached(toSign: Buffer): Signature
+  signDetached(toSign: Uint8Array): Signature
 }
 
 export declare class PublicKey {
@@ -80,8 +82,8 @@ export declare const enum ClientIdType {
 
 export interface Config {
   client?: ClientConfig
-  checkServerKey?: (arg: PublicKey) => boolean | Promise<boolean> | unknown
-  authBanner?: (arg: string) => void
+  checkServerKey?: ((arg: PublicKey) => boolean | Promise<boolean> | unknown)
+  authBanner?: ((arg: string) => void)
 }
 
 export declare function connect(addr: string, config?: Config | undefined | null): Promise<Client>
@@ -134,4 +136,3 @@ export declare const enum SignatureHash {
   /** SHA1 */
   SHA1 = 2
 }
-
