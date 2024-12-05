@@ -189,7 +189,10 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
     .unwrap_or_default();
   let check_server_key = config.as_mut().and_then(|c| c.check_server_key.take());
   let auth_banner = config.as_mut().and_then(|c| c.auth_banner.take());
+  #[cfg(unix)]
   let agent = AgentClient::connect_env().await.into_error()?;
+  #[cfg(windows)]
+  let agent = AgentClient::connect_pageant().await.into_error()?;
   let handle = client::connect(
     Arc::new(client_config),
     addr,
