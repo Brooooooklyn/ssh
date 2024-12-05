@@ -233,6 +233,8 @@ impl Client {
   }
 
   #[napi]
+  /// # Safety
+  ///
   /// Perform public key-based SSH authentication.
   /// The key can be omitted to use the default private key.
   /// The key can be a path to a private key file.
