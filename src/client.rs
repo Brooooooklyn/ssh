@@ -9,8 +9,6 @@ use napi_derive::napi;
 use russh::client::{self, Session};
 use russh_keys::{agent::client::AgentClient, key, load_secret_key};
 use tokio::io::AsyncWriteExt;
-#[cfg(windows)]
-use tokio::net::TcpStream as SshAgentStream;
 #[cfg(not(windows))]
 use tokio::net::UnixStream as SshAgentStream;
 
