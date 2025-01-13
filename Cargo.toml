@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 async-trait = "0.1"
 anyhow = "1"
-dirs = "5"
+dirs = "6"
 napi = { version = "3.0.0-alpha", default-features = false, features = [
   "async",
   "error_anyhow",
