@@ -73,7 +73,7 @@ export interface ClientId {
 }
 
 export declare const enum ClientIdType {
-  /** When sending the id, append RFC standard `
+  /** When sending the id, append RFC standard `\r
   `. Example: `SshId::Standard("SSH-2.0-acme")` */
   Standard = 0,
   /** When sending the id, use this buffer as it is and do not append additional line terminators. */
@@ -82,8 +82,8 @@ export declare const enum ClientIdType {
 
 export interface Config {
   client?: ClientConfig
-  checkServerKey?: ((arg: PublicKey) => boolean | Promise<boolean> | unknown)
-  authBanner?: ((arg: string) => void)
+  checkServerKey?: ((err: Error | null, arg: PublicKey) => boolean | Promise<boolean> | unknown)
+  authBanner?: ((err: Error | null, arg: string) => void)
 }
 
 export declare function connect(addr: string, config?: Config | undefined | null): Promise<Client>
