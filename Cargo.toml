@@ -9,18 +9,19 @@ crate-type = ["cdylib"]
 [dependencies]
 async-trait = "0.1"
 anyhow = "1"
+base64 = "0.22"
 dirs = "6"
-napi = { version = "3.0.0-alpha", default-features = false, features = [
+napi = { version = "3", default-features = false, features = [
   "async",
   "error_anyhow",
 ] }
-napi-derive = { version = "3.0.0-alpha" }
-russh = { version = "0.46", features = ["vendored-openssl"] }
-russh-keys = { version = "0.46", features = ["vendored-openssl"] }
+napi-derive = { version = "3" }
+rand = "0.8"
+russh = { version = "0.54" }
 tokio = { version = "1", features = ["full"] }
 
 [target.'cfg(windows)'.dependencies]
-pageant = { version = "0.0.1-beta.3" }
+pageant = { version = "0.1" }
 
 [build-dependencies]
 napi-build = "2"

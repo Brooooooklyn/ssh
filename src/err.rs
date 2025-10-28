@@ -12,7 +12,7 @@ impl<T> IntoError for Result<T, russh::Error> {
   }
 }
 
-impl<T> IntoError for Result<T, russh_keys::Error> {
+impl<T> IntoError for Result<T, russh::keys::Error> {
   type Value = T;
 
   fn into_error(self) -> napi::Result<Self::Value> {
