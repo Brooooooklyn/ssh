@@ -71,16 +71,13 @@ jobs:
             build: yarn build --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: TARGET_CC=clang yarn build --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: yarn build --target aarch64-unknown-linux-gnu -x
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: yarn build --target armv7-unknown-linux-gnueabihf -x
           - host: ubuntu-latest
             target: aarch64-linux-android
             build: yarn build --target aarch64-linux-android
-          - host: ubuntu-latest
-            target: armv7-linux-androideabi
-            build: yarn build --target armv7-linux-androideabi
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
             build: yarn build --target aarch64-unknown-linux-musl -x
