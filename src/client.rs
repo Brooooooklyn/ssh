@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -6,8 +7,8 @@ use napi::{
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode, UnknownReturnValue},
 };
 use napi_derive::napi;
-use russh::client::{self, Session};
-use russh_keys::{agent::client::AgentClient, key, load_secret_key};
+use russh::client::{self, AuthResult, Session};
+use russh::keys::{agent::client::AgentClient, load_secret_key, PublicKey as RusshPublicKey};
 use tokio::io::AsyncWriteExt;
 #[cfg(not(windows))]
 use tokio::net::UnixStream as SshAgentStream;
@@ -107,67 +108,64 @@ impl From<ClientConfig> for russh::client::Config {
 pub struct Config {
   pub client: Option<ClientConfig>,
   pub check_server_key: Option<
-    ThreadsafeFunction<
-      PublicKey,
-      Either3<bool, Promise<bool>, UnknownReturnValue>,
-      PublicKey,
-      false,
-    >,
+    ThreadsafeFunction<PublicKey, Either3<bool, Promise<bool>, UnknownReturnValue>, PublicKey>,
   >,
-  pub auth_banner: Option<ThreadsafeFunction<String, (), String, false>>,
+  pub auth_banner: Option<ThreadsafeFunction<String, (), String>>,
 }
 
 pub struct ClientHandle {
   check_server_key: Option<
-    ThreadsafeFunction<
-      PublicKey,
-      Either3<bool, Promise<bool>, UnknownReturnValue>,
-      PublicKey,
-      false,
-    >,
+    ThreadsafeFunction<PublicKey, Either3<bool, Promise<bool>, UnknownReturnValue>, PublicKey>,
   >,
-  auth_banner: Option<ThreadsafeFunction<String, (), String, false>>,
+  auth_banner: Option<ThreadsafeFunction<String, (), String>>,
 }
 
 #[async_trait]
 impl russh::client::Handler for ClientHandle {
   type Error = anyhow::Error;
 
-  async fn auth_banner(
+  fn auth_banner(
     &mut self,
     banner: &str,
     _session: &mut Session,
-  ) -> std::result::Result<(), Self::Error> {
-    if let Some(on_auth_banner) = self.auth_banner.take() {
-      on_auth_banner.call(banner.to_owned(), ThreadsafeFunctionCallMode::NonBlocking);
-    };
-    Ok(())
+  ) -> impl Future<Output = std::result::Result<(), Self::Error>> + Send {
+    let auth_banner = self.auth_banner.take();
+    let banner = banner.to_owned();
+    async move {
+      if let Some(on_auth_banner) = auth_banner {
+        on_auth_banner.call(Ok(banner), ThreadsafeFunctionCallMode::NonBlocking);
+      };
+      Ok(())
+    }
   }
 
-  async fn check_server_key(
+  fn check_server_key(
     &mut self,
-    server_public_key: &key::PublicKey,
-  ) -> std::result::Result<bool, Self::Error> {
+    server_public_key: &RusshPublicKey,
+  ) -> impl Future<Output = std::result::Result<bool, Self::Error>> + Send {
     // if `auth_banner` isn't called, drop the callback
     // or it will prevent the Node.js process to exit before GC
     if self.auth_banner.is_some() {
       drop(self.auth_banner.take());
     }
-    if let Some(check) = &self.check_server_key {
-      let check_result = check
-        .call_async(PublicKey::new(server_public_key.clone()))
-        .await?;
-      std::mem::drop(self.check_server_key.take());
-      match check_result {
-        Either3::A(a) => Ok(a),
-        Either3::B(b) => {
-          let result = b.await?;
-          Ok(result)
+    let check = self.check_server_key.take();
+    let server_public_key = server_public_key.clone();
+    async move {
+      if let Some(check) = check {
+        let check_result = check
+          .call_async(Ok(PublicKey::new(server_public_key)))
+          .await?;
+        match check_result {
+          Either3::A(a) => Ok(a),
+          Either3::B(b) => {
+            let result = b.await?;
+            Ok(result)
+          }
+          Either3::C(_) => Ok(false),
         }
-        Either3::C(_) => Ok(false),
+      } else {
+        Ok(true)
       }
-    } else {
-      Ok(true)
     }
   }
 }
@@ -231,11 +229,12 @@ impl Client {
     user: String,
     password: String,
   ) -> Result<bool> {
-    self
+    let auth_result = self
       .handle
       .authenticate_password(user, password)
       .await
-      .into_error()
+      .into_error()?;
+    Ok(matches!(auth_result, AuthResult::Success))
   }
 
   #[napi]
@@ -275,11 +274,15 @@ impl Client {
           .map_err(|err| Error::new(Status::GenericFailure, format!("{err}")))?
       }
     };
-    self
+    let auth_result = self
       .handle
-      .authenticate_publickey(user, Arc::new(keypair))
+      .authenticate_publickey(
+        user,
+        russh::keys::PrivateKeyWithHashAlg::new(Arc::new(keypair), None),
+      )
       .await
-      .into_error()
+      .into_error()?;
+    Ok(matches!(auth_result, AuthResult::Success))
   }
 
   #[napi]
