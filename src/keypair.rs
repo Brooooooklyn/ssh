@@ -93,13 +93,12 @@ impl KeyPair {
       _ => keys::Algorithm::Rsa { hash: None },
     };
     Ok(Self {
-      inner: keys::PrivateKey::random(&mut rand::thread_rng(), algorithm)
-        .map_err(|err| {
-          Error::new(
-            Status::GenericFailure,
-            format!("Generate rsa keypair failed: {err}"),
-          )
-        })?,
+      inner: keys::PrivateKey::random(&mut rand::thread_rng(), algorithm).map_err(|err| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Generate rsa keypair failed: {err}"),
+        )
+      })?,
     })
   }
 

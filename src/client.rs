@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::future::Future;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use napi::{
@@ -108,22 +108,14 @@ impl From<ClientConfig> for russh::client::Config {
 pub struct Config {
   pub client: Option<ClientConfig>,
   pub check_server_key: Option<
-    ThreadsafeFunction<
-      PublicKey,
-      Either3<bool, Promise<bool>, UnknownReturnValue>,
-      PublicKey,
-    >,
+    ThreadsafeFunction<PublicKey, Either3<bool, Promise<bool>, UnknownReturnValue>, PublicKey>,
   >,
   pub auth_banner: Option<ThreadsafeFunction<String, (), String>>,
 }
 
 pub struct ClientHandle {
   check_server_key: Option<
-    ThreadsafeFunction<
-      PublicKey,
-      Either3<bool, Promise<bool>, UnknownReturnValue>,
-      PublicKey,
-    >,
+    ThreadsafeFunction<PublicKey, Either3<bool, Promise<bool>, UnknownReturnValue>, PublicKey>,
   >,
   auth_banner: Option<ThreadsafeFunction<String, (), String>>,
 }
@@ -284,7 +276,10 @@ impl Client {
     };
     let auth_result = self
       .handle
-      .authenticate_publickey(user, russh::keys::PrivateKeyWithHashAlg::new(Arc::new(keypair), None))
+      .authenticate_publickey(
+        user,
+        russh::keys::PrivateKeyWithHashAlg::new(Arc::new(keypair), None),
+      )
       .await
       .into_error()?;
     Ok(matches!(auth_result, AuthResult::Success))
