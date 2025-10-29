@@ -74,7 +74,7 @@ jobs:
             build: yarn build --target aarch64-unknown-linux-gnu -x
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: yarn build --target armv7-unknown-linux-gnueabihf -x
+            build: AWS_LC_SYS_NO_JITTER_ENTROPY=1 yarn build --target armv7-unknown-linux-gnueabihf -x
           - host: ubuntu-latest
             target: aarch64-linux-android
             build: yarn build --target aarch64-linux-android
@@ -159,7 +159,7 @@ jobs:
           environment_variables: 'DEBUG RUSTUP_IO_THREADS'
           shell: bash
           run: |
-            sudo pkg install -y -f curl node libnghttp2 npm cmake
+            sudo pkg install -y -f curl node libnghttp2 npm cmake llvm
             sudo npm install --location=global --ignore-scripts yarn
             curl https://sh.rustup.rs -sSf --output rustup.sh
             sh rustup.sh -y --profile minimal --default-toolchain stable
