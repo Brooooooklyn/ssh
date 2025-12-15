@@ -135,7 +135,7 @@ jobs:
         run: ${{ matrix.settings.build }}
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.APP_NAME }}.*.node
@@ -183,7 +183,7 @@ jobs:
             rm -rf target
             rm -rf .yarn
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bindings-freebsd
           path: ${{ env.APP_NAME }}.*.node
@@ -223,7 +223,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -281,7 +281,7 @@ jobs:
           yarn config set --json supportedArchitectures.libc '["current", "musl", "gnu"]'
           yarn install
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: bindings-${{ matrix.target }}
           path: .
@@ -324,7 +324,7 @@ jobs:
       - name: create npm dirs
         run: yarn napi create-npm-dirs
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
       - name: Move artifacts
