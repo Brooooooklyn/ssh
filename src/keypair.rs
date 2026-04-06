@@ -79,7 +79,7 @@ impl KeyPair {
   #[napi(factory)]
   pub fn generate_ed25519() -> Self {
     Self {
-      inner: keys::PrivateKey::random(&mut rand::thread_rng(), keys::Algorithm::Ed25519).unwrap(),
+      inner: keys::PrivateKey::random(&mut rand::rng(), keys::Algorithm::Ed25519).unwrap(),
     }
   }
 
@@ -93,7 +93,7 @@ impl KeyPair {
       _ => keys::Algorithm::Rsa { hash: None },
     };
     Ok(Self {
-      inner: keys::PrivateKey::random(&mut rand::thread_rng(), algorithm).map_err(|err| {
+      inner: keys::PrivateKey::random(&mut rand::rng(), algorithm).map_err(|err| {
         Error::new(
           Status::GenericFailure,
           format!("Generate rsa keypair failed: {err}"),

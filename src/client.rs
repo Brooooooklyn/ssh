@@ -81,8 +81,8 @@ impl From<ClientConfig> for russh::client::Config {
     let mut russh_config = Self::default();
     if let Some(client_id) = config.client_id {
       russh_config.client_id = match client_id.kind {
-        ClientIdType::Standard => russh::SshId::Standard(client_id.id),
-        ClientIdType::Raw => russh::SshId::Raw(client_id.id),
+        ClientIdType::Standard => russh::SshId::Standard(client_id.id.into()),
+        ClientIdType::Raw => russh::SshId::Raw(client_id.id.into()),
       };
     }
     if let Some(limits) = config.limits {
@@ -193,7 +193,7 @@ pub async fn connect(addr: String, mut config: Option<Config>) -> Result<Client>
   #[cfg(unix)]
   let agent = AgentClient::connect_env().await.into_error()?;
   #[cfg(windows)]
-  let agent = AgentClient::connect_pageant().await;
+  let agent = AgentClient::connect_pageant().await.into_error()?;
   let handle = client::connect(
     Arc::new(client_config),
     addr,
