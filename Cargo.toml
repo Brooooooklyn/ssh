@@ -30,3 +30,9 @@ napi-build = "2"
 lto = true
 codegen-units = 1
 strip = "symbols"
+
+[patch.crates-io]
+# Pin elliptic curve crates to compatible versions to avoid trait bound issues
+# See: https://github.com/Brooooooklyn/ssh/actions/runs/24563129727/job/71816496711
+primeorder = { git = "https://github.com/RustCrypto/elliptic-curves", rev = "primeorder/v0.14.0-rc.9" }
+primefield = { git = "https://github.com/RustCrypto/elliptic-curves", rev = "primefield/v0.14.0-rc.9" }
