@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 async-trait = "0.1"
 anyhow = "1"
 base64 = "0.22"
-dirs = "6"
+dirs = "7"
 napi = { version = "3", default-features = false, features = [
   "async",
   "error_anyhow",
